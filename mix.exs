@@ -9,7 +9,8 @@ defmodule Andrew.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      consolidate_protocols: Mix.env() != :dev
     ]
   end
 
@@ -32,6 +33,11 @@ defmodule Andrew.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # ash
+      {:igniter, "~> 0.6", only: [:dev, :test]},
+      {:sourceror, "~> 1.8", only: [:dev, :test]},
+      {:ash, "~> 3.0"},
+      # default
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
