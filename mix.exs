@@ -39,6 +39,7 @@ defmodule Andrew.MixProject do
       {:ash, "~> 3.0"},
       {:ash_sqlite, "~> 0.2"},
       {:ash_ai, "~> 0.2"},
+      {:ash_phoenix, "~> 2.0"},
       {:langchain, github: "brainlid/langchain", ref: "e268c65", override: true},
       # default
       {:phoenix, "~> 1.7.21"},
