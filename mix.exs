@@ -34,10 +34,12 @@ defmodule Andrew.MixProject do
   defp deps do
     [
       # ash
-      {:igniter, "~> 0.6", only: [:dev, :test]},
-      {:sourceror, "~> 1.8", only: [:dev, :test]},
+      {:igniter, "~> 0.6"},
+      {:sourceror, "~> 1.8"},
       {:ash, "~> 3.0"},
       {:ash_sqlite, "~> 0.2"},
+      {:ash_ai, "~> 0.2"},
+      {:langchain, github: "brainlid/langchain", ref: "e268c65", override: true},
       # default
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
