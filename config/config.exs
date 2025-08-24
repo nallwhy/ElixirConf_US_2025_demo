@@ -7,6 +7,8 @@
 # General application configuration
 import Config
 
+config :andrew, ash_domains: [Andrew.Domain.Invoicing]
+
 config :ash,
   allow_forbidden_field_for_relationships_by_default?: true,
   include_embedded_source_by_default?: false,
