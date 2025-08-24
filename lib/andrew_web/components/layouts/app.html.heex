@@ -9,9 +9,22 @@
         </div>
       </div>
       
-<!-- Navigation area (empty for now) -->
-      <div class="flex-1 overflow-y-auto">
-        <!-- Menu items will go here -->
+<!-- Navigation area -->
+      <div class="flex-1 overflow-y-auto py-4">
+        <nav class="px-4 space-y-2">
+          <.link
+            navigate={~p"/"}
+            class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+          >
+            <span class="ml-3">Dashboard</span>
+          </.link>
+          <.link
+            navigate={~p"/clients"}
+            class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+          >
+            <span class="ml-3">Clients</span>
+          </.link>
+        </nav>
       </div>
     </div>
   </div>

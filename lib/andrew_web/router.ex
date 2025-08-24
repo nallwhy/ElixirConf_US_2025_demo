@@ -17,7 +17,10 @@ defmodule AndrewWeb.Router do
   scope "/", AndrewWeb do
     pipe_through :browser
 
-    live "/", HomeLive, :index
+    live_session :default, on_mount: [] do
+      live "/", HomeLive, :index
+      live "/clients", ClientLive.Index, :index
+    end
   end
 
   # Other scopes may use custom stacks.
