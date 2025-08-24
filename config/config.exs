@@ -7,7 +7,7 @@
 # General application configuration
 import Config
 
-config :andrew, ash_domains: [Andrew.Domain.Invoicing]
+config :andrew, ash_domains: [Andrew.Domain.Invoicing], ecto_repos: [Andrew.Repo]
 
 config :ash,
   allow_forbidden_field_for_relationships_by_default?: true,

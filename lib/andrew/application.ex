@@ -11,8 +11,7 @@ defmodule Andrew.Application do
       AndrewWeb.Telemetry,
       Andrew.Repo,
       {Ecto.Migrator,
-        repos: Application.fetch_env!(:andrew, :ecto_repos),
-        skip: skip_migrations?()},
+       repos: Application.fetch_env!(:andrew, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:andrew, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Andrew.PubSub},
       # Start a worker by calling: Andrew.Worker.start_link(arg)
