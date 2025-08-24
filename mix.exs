@@ -33,6 +33,7 @@ defmodule Andrew.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:tidewave, "~> 0.4", only: [:dev]},
       {:igniter, "~> 0.6"},
       {:sourceror, "~> 1.8"},
       {:usage_rules, "~> 0.1", only: [:dev]},
