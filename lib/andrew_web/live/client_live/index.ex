@@ -17,9 +17,12 @@ defmodule AndrewWeb.ClientLive.Index do
     <div class="max-w-7xl">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-semibold text-gray-900">Clients</h1>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <.link
+          navigate={~p"/clients/new"}
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+        >
           Add Client
-        </button>
+        </.link>
       </div>
 
       <div class="bg-white shadow rounded-lg">

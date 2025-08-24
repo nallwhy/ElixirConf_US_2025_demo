@@ -20,6 +20,7 @@ defmodule AndrewWeb.Router do
     live_session :default, on_mount: [] do
       live "/", HomeLive, :index
       live "/clients", ClientLive.Index, :index
+      live "/clients/new", ClientLive.New, :new
     end
   end
 
