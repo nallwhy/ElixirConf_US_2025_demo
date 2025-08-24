@@ -33,9 +33,10 @@ defmodule Andrew.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      # ash
       {:igniter, "~> 0.6"},
       {:sourceror, "~> 1.8"},
+      {:usage_rules, "~> 0.1", only: [:dev]},
+      # ash
       {:ash, "~> 3.0"},
       {:ash_sqlite, "~> 0.2"},
       {:ash_ai, "~> 0.2"},
