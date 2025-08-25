@@ -33,6 +33,7 @@ defmodule Andrew.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # base
       {:tidewave, "~> 0.4", only: [:dev]},
       {:igniter, "~> 0.6"},
       {:sourceror, "~> 1.8"},
@@ -43,6 +44,8 @@ defmodule Andrew.MixProject do
       {:ash_ai, "~> 0.2"},
       {:ash_phoenix, "~> 2.0"},
       {:langchain, github: "brainlid/langchain", ref: "e268c65", override: true},
+      # etc
+      {:mdex, "~> 0.8.2"},
       # default
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
