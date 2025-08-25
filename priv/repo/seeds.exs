@@ -21,7 +21,7 @@ sample_clients = [
   },
   %{
     name: "XYZ Engineering Ltd.",
-    license_no: "ENG-2024-002", 
+    license_no: "ENG-2024-002",
     address: "456 Technology Blvd, San Francisco, CA 94107"
   },
   %{
@@ -47,6 +47,7 @@ Enum.each(sample_clients, fn client_attrs ->
        |> Ash.create() do
     {:ok, client} ->
       IO.puts("Created client: #{client.name}")
+
     {:error, error} ->
       IO.puts("Failed to create client #{client_attrs.name}: #{inspect(error)}")
   end

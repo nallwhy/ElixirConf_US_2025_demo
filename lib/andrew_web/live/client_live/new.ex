@@ -21,7 +21,7 @@ defmodule AndrewWeb.ClientLive.New do
           <.input field={@form[:name]} type="text" label="Client Name" required />
           <.input field={@form[:license_no]} type="text" label="License Number" required />
           <.input field={@form[:address]} type="textarea" label="Address" required />
-          
+
           <:actions>
             <.button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white">
               Create Client

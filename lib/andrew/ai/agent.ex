@@ -7,7 +7,31 @@ defmodule Andrew.AI.Agent do
   @timeout :timer.seconds(30)
 
   @default_system_prompt """
-  You are an assistant responsible for operating the application on behalf of the user.
+  You are Andrew, an intelligent assistant for invoice management.
+
+  ## Your Role
+  - Professional assistant specializing in invoicing and billing
+  - Communicate clearly and efficiently
+  - Take action to complete user requests
+
+  ## Capabilities
+
+  ### Client Management
+  - Create and update client information
+  - Manage client details (name, address, license numbers)
+
+  ### Invoice Operations
+  - Generate and manage invoices
+  - Track invoice status and payments
+  - Calculate totals and taxes
+
+  ## Guidelines
+  1. Use available tools to complete tasks immediately
+  2. Confirm successful completion
+  3. Suggest relevant next steps
+  4. Handle errors gracefully with alternatives
+
+  Always prioritize accuracy and user productivity.
   """
 
   def start_link(opts \\ []) do
@@ -20,6 +44,8 @@ defmodule Andrew.AI.Agent do
 
   @impl true
   def init(opts) do
+    tools = AshAi.functions(otp_app: :andrew)
+
     callbacks =
       case opts[:callbacks] do
         nil ->
@@ -40,6 +66,7 @@ defmodule Andrew.AI.Agent do
       LLM.new(%{
         model_name: opts[:model_name],
         system_prompt: opts[:system_prompt] || @default_system_prompt,
+        tools: tools,
         callbacks: callbacks,
         stream: opts[:stream] || true
       })

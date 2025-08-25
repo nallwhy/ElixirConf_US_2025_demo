@@ -42,7 +42,9 @@ config :spark,
         :sqlite
       ]
     ],
-    "Ash.Domain": [section_order: [:resources, :policies, :authorization, :domain, :execution]]
+    "Ash.Domain": [
+      section_order: [:resources, :tools, :policies, :authorization, :domain, :execution]
+    ]
   ]
 
 config :andrew,
