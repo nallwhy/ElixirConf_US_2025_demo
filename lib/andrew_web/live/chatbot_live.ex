@@ -64,7 +64,7 @@ defmodule AndrewWeb.ChatbotLive do
           <li class="text-left">
             <span class="prose">
               <span :if={@in_progress && !@new_message}>
-                <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
+                <.icon name="hero-arrow-path" class="ml-1 size-4 animate-spin" />
               </span>
               <span :if={@new_message}>{@new_message |> U.Md.html() |> raw()}</span>
             </span>
@@ -129,7 +129,7 @@ defmodule AndrewWeb.ChatbotLive do
     socket =
       socket
       |> update(:messages, &(&1 ++ [message]))
-      |> assign(in_progress: true, new_message: "")
+      |> assign(in_progress: true, new_message: nil)
 
     {:noreply, socket}
   end

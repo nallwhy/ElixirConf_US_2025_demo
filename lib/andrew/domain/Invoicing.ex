@@ -6,6 +6,7 @@ defmodule Andrew.Domain.Invoicing do
   end
 
   tools do
+    tool :list_clients, __MODULE__.Client, :read
     tool :create_client, __MODULE__.Client, :create
   end
 end

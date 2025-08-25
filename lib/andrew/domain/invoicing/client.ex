@@ -5,8 +5,8 @@ defmodule Andrew.Domain.Invoicing.Client do
 
   attributes do
     uuid_v7_primary_key :id
-    attribute :name, :string, allow_nil?: false
-    attribute :license_no, :string, allow_nil?: false
+    attribute :name, :string, allow_nil?: false, public?: true
+    attribute :license_no, :string, allow_nil?: false, public?: true
     attribute :address, :string, allow_nil?: false
   end
 
