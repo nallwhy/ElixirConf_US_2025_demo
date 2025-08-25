@@ -62,7 +62,7 @@ config :andrew, AndrewWeb.Endpoint,
 
 # Configure esbuild (the version is required)
 config :esbuild,
-  version: "0.17.11",
+  version: "0.25.0",
   andrew: [
     args:
       ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
@@ -72,14 +72,13 @@ config :esbuild,
 
 # Configure tailwind (the version is required)
 config :tailwind,
-  version: "3.4.3",
+  version: "4.1.12",
   andrew: [
-    args: ~w(
-      --config=tailwind.config.js
-      --input=css/app.css
-      --output=../priv/static/assets/app.css
-    ),
-    cd: Path.expand("../assets", __DIR__)
+    args: ~w[
+      --input=assets/css/app.css
+      --output=priv/static/assets/app.css
+    ],
+    cd: Path.expand("..", __DIR__)
   ]
 
 # Configures Elixir's Logger

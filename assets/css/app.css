@@ -1,5 +1,29 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss" source(none);
+@source "../css";
+@source "../js";
+@source "../../lib/andrew_web";
 
-/* This file is for your main application CSS */
+@plugin "../vendor/heroicons";
+
+/* Add variants based on LiveView classes */
+@custom-variant phx-click-loading ([".phx-click-loading&", ".phx-click-loading &"]);
+@custom-variant phx-submit-loading ([".phx-submit-loading&", ".phx-submit-loading &"]);
+@custom-variant phx-change-loading ([".phx-change-loading&", ".phx-change-loading &"]);
+
+/* Make LiveView wrapper divs transparent for layout */
+[data-phx-root-id] {
+  display: contents
+}
+
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+
+@layer base {
+
+  .prose p,
+  .prose ol,
+  .prose ul,
+  .prose li {
+    margin: 0 !important;
+  }
+}
