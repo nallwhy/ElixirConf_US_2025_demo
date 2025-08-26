@@ -1,7 +1,8 @@
 defmodule Andrew.Domain.Invoicing.Client do
   use Ash.Resource,
     domain: Andrew.Domain.Invoicing,
-    data_layer: AshSqlite.DataLayer
+    data_layer: AshSqlite.DataLayer,
+    authorizers: [Ash.Policy.Authorizer]
 
   attributes do
     uuid_v7_primary_key :id
@@ -21,6 +22,20 @@ defmodule Andrew.Domain.Invoicing.Client do
     update :update do
       primary? true
       accept [:name, :address]
+    end
+  end
+
+  policies do
+    policy action_type(:create) do
+      authorize_if actor_attribute_equals(:role, "admin")
+    end
+
+    policy action_type(:update) do
+      authorize_if actor_attribute_equals(:role, "admin")
+    end
+
+    policy always() do
+      authorize_if always()
     end
   end
 

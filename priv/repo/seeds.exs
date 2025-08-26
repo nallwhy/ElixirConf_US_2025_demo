@@ -12,6 +12,8 @@
 
 alias Andrew.Domain.Invoicing.Client
 
+actor = %{role: "admin"}
+
 # Create sample clients
 sample_clients = [
   %{
@@ -44,7 +46,7 @@ sample_clients = [
 Enum.each(sample_clients, fn client_attrs ->
   case Client
        |> Ash.Changeset.for_create(:create, client_attrs)
-       |> Ash.create() do
+       |> Ash.create(actor: actor) do
     {:ok, client} ->
       IO.puts("Created client: #{client.name}")
 

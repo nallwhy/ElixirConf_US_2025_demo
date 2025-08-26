@@ -44,6 +44,7 @@ defmodule Andrew.MixProject do
       {:ash_ai, "~> 0.2"},
       {:ash_phoenix, "~> 2.0"},
       {:langchain, github: "brainlid/langchain", ref: "e268c65", override: true},
+      {:simple_sat, "~> 0.1"},
       # etc
       {:mdex, "~> 0.8.2"},
       # default
