@@ -75,20 +75,19 @@ defmodule AndrewWeb.ChatbotLive do
 
       <div class="rounded-lg p-4">
         <form phx-submit="send_message" class="flex flex-col gap-y-2">
-          <div class="flex items-center gap-x-2">
-            <input
-              id="chatbot-input"
-              name="message"
-              class="flex-1 rounded-lg border-1 p-2"
-            />
-            <button
-              type="submit"
-              class="w-24 cursor-pointer rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 disabled:bg-gray-300"
-              disabled={disabled(@in_progress)}
-            >
-              {if !disabled(@in_progress), do: "Send", else: "..."}
-            </button>
-          </div>
+          <textarea
+            id="chatbot-input"
+            name="message"
+            class="flex-1 rounded-lg border-1 p-2"
+            phx-hook="SubmitOnMetaEnter"
+          />
+          <button
+            type="submit"
+            class="w-24 cursor-pointer rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 disabled:bg-gray-300"
+            disabled={disabled(@in_progress)}
+          >
+            {if !disabled(@in_progress), do: "Send", else: "..."}
+          </button>
         </form>
       </div>
     </div>
