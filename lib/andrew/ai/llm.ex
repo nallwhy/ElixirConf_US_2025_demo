@@ -4,6 +4,7 @@ defmodule Andrew.AI.LLM do
           api_key: String.t() | nil,
           system_prompt: String.t() | nil,
           tools: list() | nil,
+          function_context: any(),
           callbacks: map() | nil,
           stream: boolean(),
           chain: any()
@@ -14,7 +15,8 @@ defmodule Andrew.AI.LLM do
               [
                 api_key: nil,
                 system_prompt: nil,
-                tools: [],
+                tools: nil,
+                function_context: nil,
                 callbacks: nil,
                 stream: false,
                 chain: nil
@@ -59,6 +61,7 @@ defmodule Andrew.AI.LLM do
            api_key: api_key,
            system_prompt: system_prompt,
            tools: tools,
+           function_context: function_context,
            callbacks: callbacks,
            stream: stream
          } = llm
@@ -75,6 +78,10 @@ defmodule Andrew.AI.LLM do
       |> U.Nillable.run_if(
         tools,
         &(&1 |> LLMChain.add_tools(tools))
+      )
+      |> U.Nillable.run_if(
+        function_context,
+        &(&1 |> LLMChain.update_custom_context(function_context))
       )
       |> U.Nillable.run_if(
         callbacks,

@@ -54,7 +54,9 @@ defmodule Andrew.AI.Agent do
 
   @impl true
   def init(opts) do
-    tools = AshAi.functions(otp_app: :andrew)
+    function_context = opts[:function_context] || []
+
+    tools = AshAi.functions(otp_app: :andrew, actor: function_context[:actor])
 
     callbacks =
       case opts[:callbacks] do
@@ -77,6 +79,7 @@ defmodule Andrew.AI.Agent do
         model_name: opts[:model_name],
         system_prompt: opts[:system_prompt] || @default_system_prompt,
         tools: tools,
+        function_context: function_context,
         callbacks: callbacks,
         stream: opts[:stream] || true
       })

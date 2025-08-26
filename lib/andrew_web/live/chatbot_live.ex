@@ -7,6 +7,7 @@ defmodule AndrewWeb.ChatbotLive do
   def mount(_params, _session, socket) do
     socket =
       socket
+      |> assign(actor: %{role: "admin"})
       |> assign_agent()
       |> assign(messages: [], new_message: nil, in_progress: false, expanded: false)
 
@@ -182,6 +183,7 @@ defmodule AndrewWeb.ChatbotLive do
     {:ok, agent} =
       AI.Agent.start_link(%{
         model_name: "gpt-4.1-mini",
+        function_context: %{actor: socket.assigns.actor},
         callbacks: callbacks,
         stream: true
       })
