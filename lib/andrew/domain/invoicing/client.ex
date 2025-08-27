@@ -14,6 +14,10 @@ defmodule Andrew.Domain.Invoicing.Client do
   actions do
     defaults [:read, :destroy]
 
+    read :list do
+      prepare build(default_sort: [id: :desc])
+    end
+
     create :create do
       primary? true
       accept [:name, :license_no, :address]

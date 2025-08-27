@@ -41,6 +41,12 @@ defmodule Andrew.AI.Agent do
   3. Execute each step and report progress
   4. Summarize the results and suggest next actions
 
+  ## Post-Action Navigation
+  After completing tasks, help users view the results:
+  - Navigate to relevant pages when it would be helpful to see the outcome
+  - Consider what the user would want to see next
+  - Always explain why you're navigating and what they'll find there
+
   Always prioritize accuracy and user productivity.
   """
 
@@ -54,9 +60,15 @@ defmodule Andrew.AI.Agent do
 
   @impl true
   def init(opts) do
+    pid = opts[:pid]
     function_context = opts[:function_context] || []
 
-    tools = AshAi.functions(otp_app: :andrew, actor: function_context[:actor])
+    tools =
+      [
+        Andrew.AI.Tools.navigate_to_page(pid),
+        AshAi.functions(otp_app: :andrew, actor: function_context[:actor])
+      ]
+      |> List.flatten()
 
     callbacks =
       case opts[:callbacks] do

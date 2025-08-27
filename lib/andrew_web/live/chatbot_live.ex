@@ -156,6 +156,15 @@ defmodule AndrewWeb.ChatbotLive do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_info({:navigate, path}, socket) do
+    socket =
+      socket
+      |> push_navigate(to: path)
+
+    {:noreply, socket}
+  end
+
   defp assign_agent(socket) do
     pid = self()
 
@@ -183,6 +192,7 @@ defmodule AndrewWeb.ChatbotLive do
       AI.Agent.start_link(%{
         model_name: "gpt-4.1-mini",
         function_context: %{actor: socket.assigns.actor},
+        pid: pid,
         callbacks: callbacks,
         stream: true
       })

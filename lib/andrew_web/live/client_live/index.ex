@@ -73,7 +73,7 @@ defmodule AndrewWeb.ClientLive.Index do
   end
 
   defp load_clients(socket) do
-    clients = Invoicing.Client |> Ash.read!()
+    clients = Invoicing.Client |> Ash.read!(action: :list)
     assign(socket, :clients, clients)
   end
 end
