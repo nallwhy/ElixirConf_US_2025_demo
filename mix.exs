@@ -41,7 +41,7 @@ defmodule Andrew.MixProject do
       # ash
       {:ash, "~> 3.0"},
       {:ash_sqlite, "~> 0.2"},
-      {:ash_ai, "~> 0.2"},
+      {:ash_ai, github: "nallwhy/ash_ai", branch: "public_parameter_schema"},
       {:ash_phoenix, "~> 2.0"},
       {:langchain, github: "brainlid/langchain", ref: "e268c65", override: true},
       {:simple_sat, "~> 0.1"},
