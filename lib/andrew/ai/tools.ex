@@ -98,13 +98,19 @@ defmodule Andrew.AI.Tools do
   end
 
   defp to_schema(:create_client) do
+    parameter_schema(Andrew.Domain.Invoicing.Client, :create)
+  end
+
+  defp to_schema(_) do
     %{
       "type" => "object",
-      "properties" => %{
-        "name" => %{"type" => "string"},
-        "license_no" => %{"type" => "string"},
-        "address" => %{"type" => "string"}
-      }
+      "properties" => %{}
     }
+  end
+
+  defp parameter_schema(resource, action_name) do
+    action = Ash.Resource.Info.action(resource, action_name)
+
+    AshAi.parameter_schema(nil, resource, action) |> get_in(["properties", "input"])
   end
 end
