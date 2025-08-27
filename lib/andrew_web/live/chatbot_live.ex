@@ -201,7 +201,14 @@ defmodule AndrewWeb.ChatbotLive do
                 - filename: #{filename}
                 - file_url: #{file_url}
                 - mime_type: #{mime_type}
-                """
+                """,
+                visible: false
+              },
+              %{
+                type: :file,
+                content: nil,
+                opts: %{filename: filename, mime_type: mime_type},
+                virtual: true
               }
             ])
       )
@@ -325,8 +332,9 @@ defmodule AndrewWeb.ChatbotLive do
   ## Components
 
   attr :message, AI.Message, required: true
+  attr :has_visible_content, :boolean
 
-  defp message(%{message: %{role: :user}} = assigns) do
+  defp message(%{message: %{role: :user}, has_visible_content: true} = assigns) do
     ~H"""
     <div id={@message.id} class="relative flex w-full flex-col items-end">
       <div class="max-w-[70%] prose rounded-xl bg-gray-200 px-4 py-2">
@@ -336,7 +344,7 @@ defmodule AndrewWeb.ChatbotLive do
     """
   end
 
-  defp message(%{message: %{role: :assistant}} = assigns) do
+  defp message(%{message: %{role: :assistant}, has_visible_content: true} = assigns) do
     ~H"""
     <div id={@message.id} class="prose">
       <.content :for={content <- @message.contents} content={content} />
@@ -344,12 +352,26 @@ defmodule AndrewWeb.ChatbotLive do
     """
   end
 
-  defp message(assigns) do
+  defp message(%{has_visible_content: false} = assigns) do
     ~H"""
     """
   end
 
+  defp message(%{message: %{role: role, contents: contents}} = assigns) do
+    has_visible_content =
+      role in [:user, :assistant] and contents |> Enum.any?(fn content -> content.visible end)
+
+    assigns = assigns |> assign(:has_visible_content, has_visible_content)
+
+    message(assigns)
+  end
+
   attr :content, AI.Message.ContentPart, required: true
+
+  defp content(%{content: %{visible: false}} = assigns) do
+    ~H"""
+    """
+  end
 
   defp content(%{content: %{type: :text}} = assigns) do
     ~H"""

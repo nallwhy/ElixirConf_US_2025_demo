@@ -12,9 +12,11 @@ defmodule Andrew.AI.Message do
   defmodule ContentPart do
     @type t :: %__MODULE__{
             id: String.t(),
-            type: :text,
+            type: :text | :file,
             content: String.t(),
-            opts: map()
+            opts: map(),
+            visible: boolean(),
+            virtual: boolean()
           }
 
     use Ecto.Schema
@@ -23,9 +25,11 @@ defmodule Andrew.AI.Message do
     @primary_key false
     embedded_schema do
       field :id, :string
-      field :type, Ecto.Enum, values: [:text]
+      field :type, Ecto.Enum, values: [:text, :file]
       field :content, :string
       field :opts, :map, default: %{}
+      field :visible, :boolean, default: true
+      field :virtual, :boolean, default: false
     end
 
     def new(attrs) do
@@ -35,7 +39,7 @@ defmodule Andrew.AI.Message do
 
     def changeset(struct \\ %__MODULE__{}, attrs) do
       struct
-      |> cast(attrs, [:id, :type, :content, :opts])
+      |> cast(attrs, [:id, :type, :content, :opts, :visible, :virtual])
       |> Andrew.AI.Message.put_new_id()
       |> normalize_opts()
     end
@@ -298,6 +302,7 @@ defmodule Andrew.AI.Message do
       }) do
     langchain_contents =
       contents
+      |> Enum.reject(& &1.virtual)
       |> Enum.map(&ContentPart.to_langchain/1)
 
     langchain_tool_calls =
