@@ -9,6 +9,8 @@ defmodule Andrew.Domain.Invoicing.Client do
     attribute :name, :string, allow_nil?: false, public?: true
     attribute :license_no, :string, allow_nil?: false, public?: true
     attribute :address, :string, allow_nil?: false
+    attribute :phone_number, :string, allow_nil?: true
+    attribute :email, :string, allow_nil?: true
   end
 
   actions do
@@ -20,12 +22,12 @@ defmodule Andrew.Domain.Invoicing.Client do
 
     create :create do
       primary? true
-      accept [:name, :license_no, :address]
+      accept [:name, :license_no, :address, :phone_number, :email]
     end
 
     update :update do
       primary? true
-      accept [:name, :address]
+      accept [:name, :address, :phone_number, :email]
     end
   end
 
