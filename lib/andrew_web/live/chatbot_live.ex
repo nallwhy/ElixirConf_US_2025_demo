@@ -285,6 +285,7 @@ defmodule AndrewWeb.ChatbotLive do
         model_name: "gpt-4.1-mini",
         function_context: %{actor: socket.assigns.actor},
         pid: pid,
+        listener_id: Ash.UUIDv7.generate(),
         callbacks: callbacks,
         stream: true
       })

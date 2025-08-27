@@ -3,7 +3,7 @@ defmodule Andrew.AI.Tools do
   alias Andrew.AI.Utils
   alias Andrew.Utils, as: U
 
-  def navigate_to_page(pid) do
+  def navigate_to_page(pid, listener_id) do
     Function.new!(%{
       name: "navigate_to_page",
       description: """
@@ -44,7 +44,7 @@ defmodule Andrew.AI.Tools do
             _ -> nil
           end
 
-        query_params = query_params[page_name] || %{}
+        query_params = (query_params[page_name] || %{}) |> Map.put("listener_id", listener_id)
 
         path_with_query_params = path |> U.URI.append_query(%{"form_params" => query_params})
 

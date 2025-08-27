@@ -2,7 +2,8 @@ defmodule Andrew.Domain.Invoicing.Client do
   use Ash.Resource,
     domain: Andrew.Domain.Invoicing,
     data_layer: AshSqlite.DataLayer,
-    authorizers: [Ash.Policy.Authorizer]
+    authorizers: [Ash.Policy.Authorizer],
+    notifiers: [Ash.Notifier.PubSub]
 
   attributes do
     uuid_v7_primary_key :id
@@ -23,6 +24,15 @@ defmodule Andrew.Domain.Invoicing.Client do
     create :create do
       primary? true
       accept [:name, :license_no, :address, :phone_number, :email]
+      argument :listener_id, :string, public?: false
+      metadata :listener_id, :string
+
+      change after_action(fn cs, client, _ctx ->
+               listener_id = cs |> Ash.Changeset.get_argument(:listener_id)
+               client = client |> Ash.Resource.put_metadata(:listener_id, listener_id)
+
+               {:ok, client}
+             end)
     end
 
     update :update do
@@ -43,6 +53,14 @@ defmodule Andrew.Domain.Invoicing.Client do
     policy always() do
       authorize_if always()
     end
+  end
+
+  pub_sub do
+    module Phoenix.PubSub
+    name Andrew.PubSub
+    prefix "client"
+
+    publish :create, "created"
   end
 
   identities do

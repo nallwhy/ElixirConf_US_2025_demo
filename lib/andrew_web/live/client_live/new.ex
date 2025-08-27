@@ -29,6 +29,9 @@ defmodule AndrewWeb.ClientLive.New do
 
       <div class="bg-white shadow rounded-lg p-6">
         <.simple_form for={@form} phx-submit="save">
+          <div class="hidden">
+            <.input field={@form[:listener_id]} />
+          </div>
           <.input field={@form[:name]} type="text" label="Client Name" required />
           <.input field={@form[:license_no]} type="text" label="License Number" required />
           <.input field={@form[:address]} type="textarea" label="Address" required />

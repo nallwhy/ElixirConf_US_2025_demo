@@ -73,11 +73,12 @@ defmodule Andrew.AI.Agent do
   @impl true
   def init(opts) do
     pid = opts[:pid]
+    listener_id = opts[:listener_id]
     function_context = opts[:function_context] || []
 
     tools =
       [
-        Tools.navigate_to_page(pid),
+        Tools.navigate_to_page(pid, listener_id),
         Tools.extract_data_from_file()
         # AshAi.functions(otp_app: :andrew, actor: function_context[:actor])
       ]
@@ -99,6 +100,8 @@ defmodule Andrew.AI.Agent do
           handler
       end
 
+    :ok = Phoenix.PubSub.subscribe(Andrew.PubSub, "client:created")
+
     llm =
       LLM.new(%{
         model_name: opts[:model_name],
@@ -109,7 +112,7 @@ defmodule Andrew.AI.Agent do
         stream: opts[:stream] || true
       })
 
-    {:ok, %{llm: llm, pid: pid}}
+    {:ok, %{llm: llm, pid: pid, listener_id: listener_id}}
   end
 
   @impl true
@@ -138,5 +141,44 @@ defmodule Andrew.AI.Agent do
     send(pid, :chain_processed)
 
     {:noreply, %{state | llm: new_llm}}
+  end
+
+  @impl true
+  def handle_info(
+        %Ash.Notifier.Notification{resource: resource, action: action, data: data},
+        %{llm: llm, pid: pid, listener_id: listener_id} = state
+      ) do
+    data_listener_id = data |> Ash.Resource.get_metadata(:listener_id)
+
+    message =
+      case {data_listener_id, resource, action} do
+        {^listener_id, Andrew.Domain.Invoicing.Client, %{name: :create}} ->
+          Message.user([
+            %{
+              type: :text,
+              content: """
+              New client is created. Let's do the next step.
+              - client_id: #{data.id}
+              """,
+              visible: false
+            }
+          ])
+
+        _ ->
+          nil
+      end
+
+    new_llm =
+      case message do
+        nil ->
+          llm
+
+        message ->
+          send(pid, {:message_processed, message})
+
+          llm |> LLM.add_message(message)
+      end
+
+    {:noreply, %{state | llm: new_llm}, {:continue, {:run, nil}}}
   end
 end
