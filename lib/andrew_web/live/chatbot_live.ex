@@ -9,7 +9,23 @@ defmodule AndrewWeb.ChatbotLive do
       socket
       |> assign(actor: %{role: "admin"})
       |> assign_agent()
-      |> assign(messages: [], new_message: nil, in_progress: false, expanded: false)
+      |> assign(
+        messages: [],
+        new_message: nil,
+        queued_contents: []
+      )
+      |> assign(
+        in_progress: false,
+        uploading: false,
+        expanded: false
+      )
+      |> allow_upload(:files,
+        accept: ["image/*", "application/pdf"],
+        max_entries: 5,
+        external: &presign_upload/2,
+        auto_upload: true,
+        progress: &handle_progress/3
+      )
 
     {:ok, socket, layout: false}
   end
@@ -32,6 +48,7 @@ defmodule AndrewWeb.ChatbotLive do
         "z-[2000] h-[640px] w-[480px] fixed right-4 bottom-24 hidden flex-col rounded-lg bg-white shadow-lg",
         @expanded && "!flex"
       ]}
+      phx-drop-target={@uploads.files.ref}
     >
       <div class="flex items-center justify-between rounded-t-lg bg-blue-600 p-4 font-bold text-white">
         Andrew
@@ -74,20 +91,34 @@ defmodule AndrewWeb.ChatbotLive do
       </div>
 
       <div class="rounded-lg p-4">
-        <form phx-submit="send_message" class="flex flex-col gap-y-2">
-          <textarea
-            id="chatbot-input"
-            name="message"
-            class="flex-1 rounded-lg border-1 p-2"
-            phx-hook="SubmitOnMetaEnter"
-          />
-          <button
-            type="submit"
-            class="w-24 cursor-pointer rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 disabled:bg-gray-300"
-            disabled={disabled(@in_progress)}
-          >
-            {if !disabled(@in_progress), do: "Send", else: "..."}
-          </button>
+        <form phx-change="validate" phx-submit="send_message" class="flex flex-col gap-y-2">
+          <.live_file_input class="hidden" upload={@uploads.files} />
+          <div class="flex flex-wrap gap-2">
+            <div :for={entry <- @uploads.files.entries}>
+              <div class="relative text-sm">
+                <.file_card
+                  filename={entry.client_name}
+                  mime_type={entry.client_type}
+                  progress={entry.progress}
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <textarea
+              id="chatbot-input"
+              name="message"
+              class="w-full rounded-lg border-1 p-2"
+              phx-hook="SubmitOnMetaEnter"
+            />
+            <button
+              type="submit"
+              class="w-24 cursor-pointer rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 disabled:bg-gray-300"
+              disabled={disabled(@in_progress, @uploading)}
+            >
+              {if !disabled(@in_progress, @uploading), do: "Send", else: "..."}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -112,24 +143,69 @@ defmodule AndrewWeb.ChatbotLive do
   end
 
   @impl true
+  def handle_event("validate", _params, socket) do
+    socket =
+      socket
+      |> assign_uploading()
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("send_message", %{"message" => ""}, socket) do
     {:noreply, socket}
   end
 
   @impl true
   def handle_event("send_message", %{"message" => message_content}, socket) do
-    message = AI.Message.user(message_content)
+    # just consume
+    consume_uploaded_entries(socket, :files, fn _, _ -> {:ok, nil} end)
 
-    agent = socket.assigns.agent
+    message =
+      AI.Message.user(
+        socket.assigns.queued_contents ++ [%{type: :text, content: message_content}]
+      )
 
     {:ok, _} =
-      agent
+      socket.assigns.agent
       |> AI.Agent.run(message)
 
     socket =
       socket
       |> update(:messages, &(&1 ++ [message]))
-      |> assign(in_progress: true, new_message: nil)
+      |> assign(queued_contents: [], in_progress: true, new_message: nil)
+
+    {:noreply, socket}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event(
+        "file-uploaded",
+        %{
+          "filename" => filename,
+          "file_url" => file_url,
+          "mime_type" => mime_type
+        },
+        socket
+      ) do
+    socket =
+      socket
+      |> update(
+        :queued_contents,
+        &(&1 ++
+            [
+              %{
+                type: :text,
+                content: """
+                This file can be used when needed.
+                - filename: #{filename}
+                - file_url: #{file_url}
+                - mime_type: #{mime_type}
+                """
+              }
+            ])
+      )
+      |> assign_uploading()
 
     {:noreply, socket}
   end
@@ -201,8 +277,49 @@ defmodule AndrewWeb.ChatbotLive do
     |> assign(:agent, agent)
   end
 
-  defp disabled(in_progress) do
-    in_progress
+  defp presign_upload(entry, socket) do
+    {:ok, %{upload_url: upload_url}} =
+      AI.Upload.upload_url(
+        :gemini,
+        entry.client_name,
+        entry.client_size,
+        mime_type: entry.client_type,
+        origin: AndrewWeb.Endpoint.url()
+      )
+
+    {:ok, %{uploader: "Gemini", upload_url: upload_url, uuid: entry.uuid}, socket}
+  end
+
+  defp handle_progress(:files, _entry, socket) do
+    {:noreply, socket}
+  end
+
+  defp assign_uploading(socket) do
+    uploading =
+      socket.assigns.uploads.files.entries
+      |> Enum.map(& &1.progress)
+      |> Enum.any?(&(&1 < 100))
+
+    socket
+    |> assign(:uploading, uploading)
+  end
+
+  defp content_type(mime_type) do
+    case mime_type do
+      "image/" <> _ -> :image
+      "application/pdf" -> :file
+    end
+  end
+
+  defp file_type(mime_type) do
+    case mime_type do
+      "image/" <> _ -> "IMG"
+      "application/pdf" -> "PDF"
+    end
+  end
+
+  defp disabled(in_progress, uploading) do
+    in_progress || uploading
   end
 
   ## Components
@@ -240,8 +357,84 @@ defmodule AndrewWeb.ChatbotLive do
     """
   end
 
+  defp content(%{content: %{type: :file}} = assigns) do
+    ~H"""
+    <div>
+      <.file_card filename={@content.opts[:filename]} mime_type={@content.opts[:mime_type]} />
+    </div>
+    """
+  end
+
   defp content(assigns) do
     ~H"""
+    """
+  end
+
+  attr :filename, :string, required: true
+  attr :mime_type, :string, required: true
+  attr :progress, :integer, default: 100
+
+  defp file_card(assigns) do
+    ~H"""
+    <div class="max-w-60 flex h-20 items-center gap-x-2 rounded-lg bg-gray-700 p-3 text-white">
+      <.file_icon content_type={content_type(@mime_type)} progress={@progress} />
+      <div class="flex flex-col overflow-hidden">
+        <span class="truncate text-sm">{@filename}</span>
+        <span class="text-xs">{file_type(@mime_type)}</span>
+      </div>
+    </div>
+    """
+  end
+
+  attr :content_type, :string, required: true
+  attr :progress, :integer, default: 100
+
+  defp file_icon(assigns) do
+    icon =
+      case assigns.content_type do
+        :image -> "hero-photo"
+        :file -> "hero-document-text"
+      end
+
+    bg =
+      case assigns.content_type do
+        :image -> "bg-blue-500"
+        :file -> "bg-pink-500"
+      end
+
+    assigns =
+      assigns
+      |> assign(icon: icon, bg: bg)
+
+    ~H"""
+    <div class={["rounded-lg p-2", @bg]}>
+      <.icon :if={@progress == 100} name={@icon} />
+      <.progress_circle :if={@progress} progress={@progress} />
+    </div>
+    """
+  end
+
+  attr :class, :any, default: nil
+  attr :progress, :integer, required: true
+
+  defp progress_circle(assigns) do
+    ~H"""
+    <svg
+      :if={@progress < 100}
+      class={["h-5 w-5 animate-spin text-white", @class]}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+      </circle>
+      <path
+        class="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      >
+      </path>
+    </svg>
     """
   end
 end

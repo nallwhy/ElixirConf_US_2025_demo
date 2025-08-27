@@ -3,6 +3,7 @@ defmodule Andrew.AI.Agent do
   require Logger
   alias Andrew.AI.LLM
   alias Andrew.AI.Message
+  alias Andrew.AI.Tools
 
   @timeout :timer.seconds(30)
 
@@ -65,7 +66,8 @@ defmodule Andrew.AI.Agent do
 
     tools =
       [
-        Andrew.AI.Tools.navigate_to_page(pid),
+        Tools.navigate_to_page(pid),
+        Tools.extract_data_from_file(),
         AshAi.functions(otp_app: :andrew, actor: function_context[:actor])
       ]
       |> List.flatten()

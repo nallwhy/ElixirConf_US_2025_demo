@@ -57,14 +57,8 @@ defmodule Andrew.AI.Message do
           content: content,
           opts: opts
         }) do
-      langchain_type =
-        case type do
-          :link -> :text
-          type -> type
-        end
-
       LangChain.Message.ContentPart.new!(%{
-        type: langchain_type,
+        type: type,
         content: content,
         options:
           opts

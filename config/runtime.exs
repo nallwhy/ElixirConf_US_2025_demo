@@ -22,6 +22,7 @@ end
 
 # OpenAI API configuration
 config :andrew, :openai, api_key: System.get_env("OPENAI_API_KEY")
+config :andrew, :gemini, api_key: System.get_env("GEMINI_API_KEY")
 
 if config_env() == :prod do
   database_path =
