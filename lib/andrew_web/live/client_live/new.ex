@@ -2,12 +2,13 @@ defmodule AndrewWeb.ClientLive.New do
   use AndrewWeb, :live_view
   alias Andrew.Domain.Invoicing.Client
 
-  def mount(_params, _session, socket) do
+  def mount(params, _session, socket) do
+    form_params = params["form_params"] || %{}
     actor = %{role: "admin"}
 
     form =
       Client
-      |> AshPhoenix.Form.for_create(:create, actor: actor)
+      |> AshPhoenix.Form.for_create(:create, params: form_params, actor: actor)
       |> to_form()
 
     socket =

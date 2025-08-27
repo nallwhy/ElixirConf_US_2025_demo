@@ -1,6 +1,7 @@
 defmodule Andrew.AI.Tools do
   alias LangChain.Function
   alias Andrew.AI.Utils
+  alias Andrew.Utils, as: U
 
   def navigate_to_page(pid) do
     Function.new!(%{
@@ -10,6 +11,7 @@ defmodule Andrew.AI.Tools do
 
       Pages
       - list_clients
+      - create_client
       """,
       parameters_schema: %{
         "type" => "object",
@@ -17,25 +19,38 @@ defmodule Andrew.AI.Tools do
           "page_name" => %{
             "type" => "string",
             "enum" => [
-              "list_clients"
+              "list_clients",
+              "create_client"
             ]
+          },
+          "query_params" => %{
+            "type" => "object",
+            "properties" => %{
+              "list_clients" => to_schema(:list_clients),
+              "create_client" => to_schema(:create_client)
+            }
           }
         },
         "additionalProperties" => false,
-        "required" => ["page_name"]
+        "required" => ["page_name", "query_params"]
       },
       strict: true,
       async: false,
-      function: fn %{"page_name" => page_name}, _context ->
+      function: fn %{"page_name" => page_name, "query_params" => query_params}, _context ->
         path =
           case page_name do
             "list_clients" -> "/clients"
+            "create_client" -> "/clients/new"
             _ -> nil
           end
 
-        send(pid, {:navigate, path})
+        query_params = query_params[page_name] || %{}
 
-        {:ok, path}
+        path_with_query_params = path |> U.URI.append_query(%{"form_params" => query_params})
+
+        send(pid, {:navigate, path_with_query_params})
+
+        {:ok, path_with_query_params}
       end
     })
   end

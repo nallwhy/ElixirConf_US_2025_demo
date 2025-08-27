@@ -18,4 +18,18 @@ defmodule Andrew.Utils.Map do
   end
 
   def deep_from_struct(value), do: value
+
+  def deep_merge(%{} = map1, %{} = map2)
+      when is_non_struct_map(map1) and is_non_struct_map(map2) do
+    map2
+    |> Enum.reduce(map1, fn {key, value2}, acc ->
+      value1 = Map.get(acc, key)
+
+      if is_non_struct_map(value1) and is_non_struct_map(value2) do
+        Map.put(acc, key, deep_merge(value1, value2))
+      else
+        Map.put(acc, key, value2)
+      end
+    end)
+  end
 end
