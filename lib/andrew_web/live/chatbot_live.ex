@@ -17,7 +17,7 @@ defmodule AndrewWeb.ChatbotLive do
       |> assign(
         in_progress: false,
         uploading: false,
-        expanded: false
+        expanded: true
       )
       |> allow_upload(:files,
         accept: ["image/*", "application/pdf"],
@@ -234,7 +234,16 @@ defmodule AndrewWeb.ChatbotLive do
     socket =
       socket
       |> update(:messages, &(&1 ++ [message]))
-      |> assign(new_message: nil, in_progress: false)
+      |> assign(new_message: nil)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info(:chain_processed, socket) do
+    socket =
+      socket
+      |> assign(in_progress: false)
 
     {:noreply, socket}
   end

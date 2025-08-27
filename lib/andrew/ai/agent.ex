@@ -98,7 +98,7 @@ defmodule Andrew.AI.Agent do
         stream: opts[:stream] || true
       })
 
-    {:ok, %{llm: llm}}
+    {:ok, %{llm: llm, pid: pid}}
   end
 
   @impl true
@@ -111,7 +111,7 @@ defmodule Andrew.AI.Agent do
   end
 
   @impl true
-  def handle_continue({:run, _opts}, %{llm: llm} = state) do
+  def handle_continue({:run, _opts}, %{llm: llm, pid: pid} = state) do
     new_llm =
       llm
       |> LLM.run()
@@ -123,6 +123,8 @@ defmodule Andrew.AI.Agent do
           Logger.warning("Error running chain: #{inspect(error)}")
           new_llm
       end
+
+    send(pid, :chain_processed)
 
     {:noreply, %{state | llm: new_llm}}
   end

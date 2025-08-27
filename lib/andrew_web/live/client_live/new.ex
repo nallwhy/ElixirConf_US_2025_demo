@@ -3,9 +3,19 @@ defmodule AndrewWeb.ClientLive.New do
   alias Andrew.Domain.Invoicing.Client
 
   def mount(_params, _session, socket) do
-    form = AshPhoenix.Form.for_create(Client, :create)
-    socket = assign(socket, :page_title, "New Client")
-    {:ok, assign(socket, form: to_form(form))}
+    actor = %{role: "admin"}
+
+    form =
+      Client
+      |> AshPhoenix.Form.for_create(:create, actor: actor)
+      |> to_form()
+
+    socket =
+      socket
+      |> assign(:page_title, "New Client")
+      |> assign(form: form)
+
+    {:ok, socket}
   end
 
   def render(assigns) do
