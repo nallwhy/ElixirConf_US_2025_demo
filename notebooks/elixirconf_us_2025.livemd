@@ -1,0 +1,323 @@
+# ElixirConf US 2025
+
+```elixir
+Mix.install(
+  [
+    {:langchain, github: "brainlid/langchain", ref: "e268c65"}
+  ]
+)
+```
+
+## Root
+
+```elixir
+openai_api_key = System.get_env("LB_OPENAI_API_KEY")
+gemini_api_key = System.get_env("LB_GEMINI_API_KEY")
+
+alias LangChain.Message
+alias LangChain.MessageDelta
+alias LangChain.Chains.LLMChain
+alias LangChain.ChatModels.{ChatOpenAI, ChatGoogleAI}
+alias LangChain.Function
+
+openai_model_name = "gpt-4.1-mini-2025-04-14"
+
+openai_model =
+  ChatOpenAI.new!(%{
+    api_key: openai_api_key,
+    model: openai_model_name,
+    stream: true
+  })
+
+gemini_model_name = "gemini-2.5-flash"
+
+gemini_model =
+  ChatGoogleAI.new!(%{
+    api_key: gemini_api_key,
+    model: gemini_model_name,
+    stream: true
+  })
+
+format_messages = fn messages ->
+  messages
+  |> Enum.map(fn
+    %{role: role, content: [_ | _] = content} ->
+      content =
+        content
+        |> Enum.map(fn
+          %{type: :file, options: options} -> %{type: :file, options: options}
+          %{content: content} -> content
+        end)
+
+      %{role: role, content: content}
+
+    %{role: role, tool_calls: [_ | _] = tool_calls} ->
+      %{role: role, tool_calls: tool_calls |> Enum.map(& &1.name)}
+
+    %{role: role, tool_results: [_ | _] = tool_results} ->
+      %{
+        role: role,
+        tool_results: tool_results |> Enum.flat_map(& &1.content) |> Enum.map(& &1.content)
+      }
+  end)
+end
+
+format_tools = fn tools ->
+  tools
+  |> Enum.map(fn %{name: name} -> name end)
+end
+
+format_time = fn time_ns ->
+  "#{(time_ns / 1000) |> trunc()} ms"
+end
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Simple Chat
+
+```elixir
+callbacks = %{
+  on_llm_new_delta: fn _chain, deltas ->
+    merged_delta = deltas |> MessageDelta.merge_deltas()
+
+    merged_delta.merged_content
+    |> Enum.map(fn
+      %{type: :text, content: content} -> (content <> " // ") |> IO.write()
+      _ -> nil
+    end)
+  end
+}
+
+messages = [
+  Message.new_user!("Hi, How was your day?")
+]
+
+messages |> format_messages.() |> IO.inspect(label: "messages")
+
+chain =
+  %{llm: gemini_model}
+  |> LLMChain.new!()
+  |> LLMChain.add_messages(messages)
+  |> LLMChain.add_callback(callbacks)
+
+{:ok, new_chain} =
+  chain
+  |> LLMChain.run(mode: :while_needs_response)
+
+IO.puts("\n")
+
+new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
+
+nil
+```
+
+## Context Window
+
+```elixir
+messages = [
+  Message.new_user!("What's the capital of France?"),
+  Message.new_assistant!("The capital of France is Paris."),
+  Message.new_user!("What about Germany?")
+]
+
+messages |> format_messages.() |> IO.inspect(label: "messages")
+
+chain =
+  %{llm: gemini_model}
+  |> LLMChain.new!()
+  |> LLMChain.add_messages(messages)
+
+{:ok, new_chain} =
+  chain
+  |> LLMChain.run(mode: :while_needs_response)
+
+IO.puts("")
+
+new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
+
+nil
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Function Calling
+
+```elixir
+tools = [
+  Function.new!(%{
+    name: "get_datetime",
+    function: fn _arguments, _context ->
+      now = DateTime.utc_now()
+      datetime_str = now |> DateTime.to_iso8601()
+
+      {:ok, datetime_str}
+    end
+  }),
+  Function.new!(%{
+    name: "get_location",
+    function: fn _arguments, _context ->
+      location = "Orlando, Florida, USA"
+
+      {:ok, location}
+    end
+  }),
+  Function.new!(%{
+    name: "get_weather",
+    parameters_schema: %{
+      "type" => "object",
+      "properties" => %{
+        "datetime" => %{"type" => "string"},
+        "location" => %{"type" => "string"}
+      },
+      "additionalProperties" => false,
+      "required" => ["datetime", "location"]
+    },
+    function: fn params, _context ->
+      params |> IO.inspect(label: "params of get_weather")
+      
+      {:ok, "Rainy"}
+    end
+  })
+]
+
+tools |> format_tools.() |> IO.inspect(label: "tools")
+
+IO.puts("")
+
+messages = [
+  Message.new_system!("Answer simply. Respond with emoji."),
+  Message.new_user!("How's the weather?")
+]
+
+messages |> format_messages.() |> IO.inspect(label: "messages")
+
+chain =
+  %{llm: openai_model}
+  |> LLMChain.new!()
+  |> LLMChain.add_tools(tools)
+  |> LLMChain.add_messages(messages)
+
+{:ok, new_chain} =
+  chain
+  |> LLMChain.run(mode: :while_needs_response)
+
+IO.puts("")
+
+new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
+
+nil
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## File
+
+```elixir
+file_base64 =
+  File.read!("/Users/json/Documents/elixir_conf/2025/biz_license_sample.pdf") |> Base.encode64()
+
+messages = [
+  Message.new_user!([
+    Message.ContentPart.file!(file_base64,
+      type: :base64,
+      filename: "biz_license_sample.pdf"
+    )
+  ]),
+  Message.new_user!("What is the license no?"),
+  # Message.new_user!("1 + 1 = ?")
+]
+
+messages |> format_messages.() |> IO.inspect(label: "messages")
+
+chain =
+  %{llm: openai_model}
+  |> LLMChain.new!()
+  |> LLMChain.add_messages(messages)
+
+{time_ns, {:ok, new_chain}} =
+  :timer.tc(fn ->
+    chain
+    |> LLMChain.run(mode: :while_needs_response)
+  end)
+
+IO.puts("")
+
+time_ns |> format_time.() |> IO.inspect(label: "time")
+
+new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
+
+nil
+```
+
+## File via tool
+
+```elixir
+tools = [
+  Function.new!(%{
+    name: "extract_data_from_file",
+    parameters_schema: %{
+      "type" => "object",
+      "properties" => %{
+        "file_url" => %{"type" => "string"},
+        "mime_type" => %{"type" => "string"}
+      },
+      "additionalProperties" => false,
+      "required" => ["file_url", "mime_type", "job"]
+    },
+    function: fn %{"file_url" => file_url, "mime_type" => mime_type}, _context ->
+      json_schema =
+        %{
+          "type" => "object",
+          "properties" => %{
+            "license_no" => %{"type" => "string"}
+          }
+        }
+
+      {file_url, mime_type, json_schema} |> IO.inspect(label: "extract_data_from_file")
+
+      # mock delay
+      Process.sleep(3000)
+
+      response = %{license_no: "12029"} |> Jason.encode!()
+
+      {:ok, response}
+    end
+  })
+]
+
+messages = [
+  Message.new_user!("""
+  This file can be used when needed.
+  - file_url: "https://file.url",
+  - filename: "license_no.pdf"
+  - mime_type: "application/pdf"
+  """),
+  # Message.new_user!("What is the license no?")
+  Message.new_user!("1 + 1 = ?")
+]
+
+messages |> format_messages.() |> IO.inspect(label: "messages")
+
+chain =
+  %{llm: openai_model}
+  |> LLMChain.new!()
+  |> LLMChain.add_tools(tools)
+  |> LLMChain.add_messages(messages)
+
+{time_ns, {:ok, new_chain}} =
+  :timer.tc(fn ->
+    chain
+    |> LLMChain.run(mode: :while_needs_response)
+  end)
+
+IO.puts("")
+
+time_ns |> format_time.() |> IO.inspect(label: "time")
+
+new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
+
+nil
+```
+
+<!-- livebook:{"offset":6717,"stamp":{"token":"XCP.4yJcX0cikZxWIclIcCMExq31YTN6u1zTAgT_oBwx8g1eBemKsOCYYi9WhCkN1Z5rCGFxm-nI9cpCzXoWKA7w3dHwDPOTlJ2EpNfpugO65vavxsQxMU6Rg5vwshzLrAYOffV1L88vBDuQE9NiGYELyWL8vo-UVLeqJ50uabzi4wzBV_hcyeE","version":2}} -->
