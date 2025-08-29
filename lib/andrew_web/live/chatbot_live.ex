@@ -45,7 +45,7 @@ defmodule AndrewWeb.ChatbotLive do
     <div
       id="chatbot-box"
       class={[
-        "z-[2000] h-[640px] w-[480px] fixed right-4 bottom-24 hidden flex-col rounded-lg bg-white shadow-lg",
+        "z-[2000] h-[560px] w-[480px] fixed right-4 bottom-24 hidden flex-col rounded-lg bg-white shadow-lg",
         @expanded && "!flex"
       ]}
       phx-drop-target={@uploads.files.ref}
@@ -134,10 +134,18 @@ defmodule AndrewWeb.ChatbotLive do
   end
 
   def handle_event("reset", _params, socket) do
+    consume_uploaded_entries(socket, :files, fn _, _ -> {:ok, nil} end)
+
     socket =
       socket
       |> assign_agent()
-      |> assign(messages: [], new_message: nil, in_progress: false)
+      |> assign(
+        messages: [],
+        new_message: nil,
+        queued_contents: [],
+        in_progress: false,
+        uploading: false
+      )
 
     {:noreply, socket}
   end

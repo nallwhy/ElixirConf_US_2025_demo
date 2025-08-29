@@ -52,7 +52,7 @@ format_messages = fn messages ->
       %{role: role, content: content}
 
     %{role: role, tool_calls: [_ | _] = tool_calls} ->
-      %{role: role, tool_calls: tool_calls |> Enum.map(& &1.name)}
+      %{role: role, tool_calls: tool_calls |> Enum.map(& {&1.name, &1.arguments})}
 
     %{role: role, tool_results: [_ | _] = tool_results} ->
       %{
@@ -176,7 +176,7 @@ tools = [
     function: fn params, _context ->
       params |> IO.inspect(label: "params of get_weather")
       
-      {:ok, "Rainy"}
+      {:ok, "Cloudy"}
     end
   })
 ]
@@ -206,7 +206,7 @@ IO.puts("")
 
 new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
 
-nil
+new_chain.last_message.content |> List.first() |> Map.get(:content)
 ```
 
 <!-- livebook:{"branch_parent_index":0} -->
@@ -247,7 +247,7 @@ time_ns |> format_time.() |> IO.inspect(label: "time")
 
 new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
 
-nil
+new_chain.last_message.content |> List.first() |> Map.get(:content)
 ```
 
 ## File via tool
@@ -293,7 +293,7 @@ messages = [
   - filename: "license_no.pdf"
   - mime_type: "application/pdf"
   """),
-  # Message.new_user!("What is the license no?")
+  # Message.new_user!("What is the license number?")
   Message.new_user!("1 + 1 = ?")
 ]
 
@@ -317,7 +317,7 @@ time_ns |> format_time.() |> IO.inspect(label: "time")
 
 new_chain.messages |> format_messages.() |> IO.inspect(label: "response")
 
-nil
+new_chain.last_message.content |> List.first() |> Map.get(:content)
 ```
 
-<!-- livebook:{"offset":6717,"stamp":{"token":"XCP.4yJcX0cikZxWIclIcCMExq31YTN6u1zTAgT_oBwx8g1eBemKsOCYYi9WhCkN1Z5rCGFxm-nI9cpCzXoWKA7w3dHwDPOTlJ2EpNfpugO65vavxsQxMU6Rg5vwshzLrAYOffV1L88vBDuQE9NiGYELyWL8vo-UVLeqJ50uabzi4wzBV_hcyeE","version":2}} -->
+<!-- livebook:{"offset":6945,"stamp":{"token":"XCP.ZBDWsC3Lr87NCGOxcLMmv71kTENieAFenE7Apb-LXdhFcYxHm1K4kOJ_c46fqsH_tZANyjEDN1TifHyOwn6gXpfKXqNwmQkuX8oxjQSZ-bEYz4oWuUCYFaJiYa3UfbFMHsj9t0J_KTfXFr4o55mRU-r_qC3Vmkc2tuxXvqWgyXNYmVBQI7Q","version":2}} -->
